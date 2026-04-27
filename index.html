@@ -1,16 +1,323 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KISAN.AI Multilingual Voice Agri-Advisor</title>
-    <meta property="og:image" content="https://bolt.new/static/og_default.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://bolt.new/static/og_default.png" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KISAN.AI — AI Farming Advisor</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #f0f7ee; font-family: 'DM Sans', sans-serif; min-height: 100vh; padding: 20px; }
+    .app { max-width: 640px; margin: 0 auto; }
+
+    .header {
+      background: linear-gradient(135deg, #1b4332, #40916c);
+      border-radius: 20px;
+      padding: 32px 24px;
+      text-align: center;
+      margin-bottom: 16px;
+      color: white;
+      box-shadow: 0 8px 32px rgba(45,106,79,0.25);
+    }
+    .header .emoji { font-size: 2.8rem; margin-bottom: 8px; }
+    .header h1 { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.5px; }
+    .header p { font-size: 0.9rem; opacity: 0.85; margin-top: 6px; }
+    .header small { font-size: 0.75rem; opacity: 0.65; }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 22px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    }
+    .card-title { font-weight: 700; color: #2d6a4f; margin-bottom: 14px; font-size: 0.95rem; }
+
+    .lang-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .lang-btn {
+      padding: 9px 16px;
+      border: 2px solid #40916c;
+      border-radius: 10px;
+      background: white;
+      color: #40916c;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .lang-btn.active { background: #40916c; color: white; }
+
+    label { display: block; font-size: 0.8rem; color: #666; font-weight: 600; margin-bottom: 5px; margin-top: 14px; }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      font-family: inherit;
+      transition: border 0.2s;
+    }
+    input[type="text"]:focus { border-color: #40916c; }
+
+    .problem-row { display: flex; gap: 8px; align-items: center; }
+    .problem-row input { flex: 1; }
+    .mic-btn {
+      width: 46px; height: 46px;
+      border-radius: 10px;
+      border: none;
+      background: #40916c;
+      font-size: 1.3rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .mic-btn.listening { background: #e63946; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+    .listen-text { font-size: 0.78rem; color: #e63946; margin-top: 5px; min-height: 16px; }
+
+    .submit-btn {
+      width: 100%;
+      margin-top: 18px;
+      padding: 15px;
+      background: linear-gradient(135deg, #1b4332, #40916c);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 4px 16px rgba(45,106,79,0.25);
+      transition: opacity 0.2s;
+    }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .weather-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .weather-item {
+      background: #eaf3de;
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      color: #2d6a4f;
+      font-weight: 600;
+    }
+
+    .advice-card { border-left: 4px solid #f4a261; }
+    .advice-text { font-size: 1rem; line-height: 1.8; color: #333; margin-bottom: 16px; }
+    .speak-btn {
+      padding: 10px 20px;
+      background: #f4a261;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .loading { display: flex; gap: 8px; padding: 10px 0; }
+    .dot {
+      width: 10px; height: 10px;
+      background: #40916c;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite ease-in-out;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100%{transform:scale(0)} 40%{transform:scale(1)} }
+
+    .footer { text-align: center; color: #aaa; font-size: 0.78rem; padding: 12px 0; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="emoji">🌾</div>
+    <h1>KISAN.AI</h1>
+    <p>Voice-First AI Advisor for Indian Farmers</p>
+    <small>No App · No Internet · Just One Call</small>
+  </div>
+
+  <!-- Language -->
+  <div class="card">
+    <div class="card-title">🌐 Choose Language</div>
+    <div class="lang-row">
+      <button class="lang-btn active" onclick="selectLang('tamil', this)">தமிழ்</button>
+      <button class="lang-btn" onclick="selectLang('telugu', this)">తెలుగు</button>
+      <button class="lang-btn" onclick="selectLang('hindi', this)">हिंदी</button>
+      <button class="lang-btn" onclick="selectLang('english', this)">English</button>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <div class="card">
+    <div class="card-title">🚜 Tell us about your farm</div>
+
+    <label>Village Name</label>
+    <input type="text" id="village" placeholder="e.g. Thanjavur, Wardha, Anantapur" />
+
+    <label>Your Crop</label>
+    <input type="text" id="crop" placeholder="e.g. Paddy, Cotton, Groundnut" />
+
+    <label>What is the problem?</label>
+    <div class="problem-row">
+      <input type="text" id="problem" placeholder="e.g. Leaves turning yellow" />
+      <button class="mic-btn" id="micBtn" onclick="startListening()">🎤</button>
+    </div>
+    <div class="listen-text" id="listenText"></div>
+
+    <button class="submit-btn" id="submitBtn" onclick="getAdvice()">🌱 Get Farming Advice</button>
+  </div>
+
+  <!-- Weather -->
+  <div class="card">
+    <div class="card-title">🌤 Current Weather</div>
+    <div class="weather-row">
+      <div class="weather-item" id="wTemp">🌡 32°C</div>
+      <div class="weather-item" id="wHum">💧 78% Humidity</div>
+      <div class="weather-item" id="wDesc">🌥 Partly Cloudy</div>
+    </div>
+  </div>
+
+  <!-- Advice -->
+  <div class="card advice-card" id="adviceCard" style="display:none;">
+    <div class="card-title">🤖 KISAN.AI Advice</div>
+    <div id="adviceContent"></div>
+  </div>
+
+  <div class="footer">Built for Indian Farmers 🇮🇳 | WitchHunt Hackathon | Team Byte Busters</div>
+
+</div>
+
+<script>
+  const GROQ_KEY = "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";
+  const OPENWEATHER_KEY = "2bbc28f2d7dc0e1d17dcd8a72ad13c69";
+
+  let currentLang = "tamil";
+  let currentAdvice = "";
+
+  const langVoice = { tamil: "ta-IN", telugu: "te-IN", hindi: "hi-IN", english: "en-IN" };
+  const langName = { tamil: "Tamil", telugu: "Telugu", hindi: "Hindi", english: "English" };
+  const langLabel = { tamil: "தமிழ்", telugu: "తెలుగు", hindi: "हिंदी", english: "English" };
+
+  function selectLang(lang, btn) {
+    currentLang = lang;
+    document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+
+  function startListening() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { alert("Use Chrome for voice input!"); return; }
+    const r = new SR();
+    r.lang = langVoice[currentLang];
+    r.start();
+    document.getElementById("micBtn").classList.add("listening");
+    document.getElementById("micBtn").textContent = "🔴";
+    document.getElementById("listenText").textContent = "Listening... speak now";
+    r.onresult = e => {
+      document.getElementById("problem").value = e.results[0][0].transcript;
+      document.getElementById("micBtn").classList.remove("listening");
+      document.getElementById("micBtn").textContent = "🎤";
+      document.getElementById("listenText").textContent = "";
+    };
+    r.onerror = r.onend = () => {
+      document.getElementById("micBtn").classList.remove("listening");
+      document.getElementById("micBtn").textContent = "🎤";
+      document.getElementById("listenText").textContent = "";
+    };
+  }
+
+  async function getWeather(village) {
+    try {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${village}&appid=${OPENWEATHER_KEY}&units=metric`);
+      const data = await res.json();
+      const temp = data.main.temp;
+      const humidity = data.main.humidity;
+      const desc = data.weather[0].description;
+      document.getElementById("wTemp").textContent = `🌡 ${temp}°C`;
+      document.getElementById("wHum").textContent = `💧 ${humidity}% Humidity`;
+      document.getElementById("wDesc").textContent = `🌥 ${desc}`;
+      return { temp, humidity, desc };
+    } catch {
+      return { temp: 32, humidity: 78, desc: "partly cloudy" };
+    }
+  }
+
+  async function getAdvice() {
+    const village = document.getElementById("village").value.trim();
+    const crop = document.getElementById("crop").value.trim();
+    const problem = document.getElementById("problem").value.trim();
+
+    if (!village || !crop || !problem) { alert("Please fill all fields!"); return; }
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Getting advice...";
+
+    const adviceCard = document.getElementById("adviceCard");
+    const adviceContent = document.getElementById("adviceContent");
+    adviceCard.style.display = "block";
+    adviceContent.innerHTML = '<div class="loading"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+
+    const weather = await getWeather(village);
+
+    const prompt = `You are KISAN.AI, an expert agricultural advisor for Indian smallholder farmers.
+Reply ONLY in ${langName[currentLang]} language.
+
+Farmer details:
+- Village: ${village}
+- Crop: ${crop}
+- Problem: ${problem}
+- Weather: ${weather.desc}, ${weather.temp}°C, ${weather.humidity}% humidity
+
+Give 3-4 clear simple sentences of practical farming advice in ${langName[currentLang]} only. Tell exactly what to do today.`;
+
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 300
+        })
+      });
+
+      const data = await res.json();
+      currentAdvice = data.choices[0].message.content;
+
+      adviceContent.innerHTML = `
+        <p class="advice-text">${currentAdvice}</p>
+        <button class="speak-btn" onclick="speakAdvice()">🔊 Hear in ${langLabel[currentLang]}</button>
+      `;
+
+      speakAdvice();
+    } catch (e) {
+      adviceContent.innerHTML = '<p style="color:#e63946;">Could not get advice. Please try again.</p>';
+    }
+
+    btn.disabled = false;
+    btn.textContent = "🌱 Get Farming Advice";
+  }
+
+  function speakAdvice() {
+    if (!currentAdvice) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(currentAdvice);
+    utt.lang = langVoice[currentLang];
+    utt.rate = 0.85;
+    window.speechSynthesis.speak(utt);
+  }
+</script>
+</body>
 </html>
